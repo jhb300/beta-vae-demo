@@ -27,7 +27,7 @@ class Visualizer():
 
         assert self.model != None, "No model has been defined yet to run the visualizations on."
 
-        concatenated_parameters = torch.tensor([*discrete_latent_parameters, *continous_latent_parameters], dtype=torch.float)
+        concatenated_parameters = torch.tensor([*continous_latent_parameters, *discrete_latent_parameters], dtype=torch.float)
         with torch.no_grad():
             img_tensor = self.model.decode(concatenated_parameters)
 
