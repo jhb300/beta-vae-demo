@@ -2,10 +2,10 @@
 A demonstration of the capabilities of beta-VAE to disentangle data-generative factors. This demonstration provides a pre-trained disentangled VAE model and an interface that allows a user to alter the latent variables intuitively in order to generate handwritten digits according based on human-interpretable data-generative factors.
 
 ## Getting Started
-First, install the necessary requirements using 
+First, install the necessary requirements using the following command:
 ```bash
 pip install -r requirements.txt
-```.
+```
 The package was developed using Python 3.9.6.
 
 <br>
