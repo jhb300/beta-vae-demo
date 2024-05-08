@@ -11,7 +11,11 @@ The package was developed using Python 3.9.6.
 <br>
 There are two ways to use this:
 1. Jupyter Notebook: Run all cells in the demo.ipynb notebook and start by setting a certain number using the first slider.
-2. Streamlit app: Run the streamlit app using ```streamlit run demo.py```. The web-app should open automatically.
+2. Streamlit app: Run the streamlit app using the following command:
+```bash
+streamlit run demo.py
+```
+The web-app should open automatically.
 
 
 ## References
