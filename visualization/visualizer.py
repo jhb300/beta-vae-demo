@@ -30,9 +30,15 @@ class Visualizer():
         concatenated_parameters = torch.tensor([*continous_latent_parameters, *discrete_latent_parameters], dtype=torch.float)
         with torch.no_grad():
             img_tensor = self.model.decode(concatenated_parameters)
+            clean_img_tensor = img_tensor.squeeze()
+            
+            # If it's a colored image.
+            if len(clean_img_tensor) == 3:
+                clean_img_tensor = clean_img_tensor.permute(1, 2, 0)
+                print(img_tensor.shape)
 
         # Convert to image
-        image_np = img_tensor.squeeze().detach().numpy()
+        image_np = clean_img_tensor.detach().numpy()
 
         return image_np
 
