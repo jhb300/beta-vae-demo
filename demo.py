@@ -29,6 +29,16 @@ def update_mnist_image(number_type, width, style1, style2, tilt, thickness):
     )
     return img
 
+def update_fashion_mnist_image(size, diffusion, style, shape, garment_type):
+    continuous = [0.0, size, 0.0, diffusion, 0.0, style, 0.0, 0.0, 0.0, shape]
+    discrete = np.zeros(10, int)
+    discrete[garment_type] = (
+        3 # 3 for a good sharpness, fixed instead of ppf
+    )
+    img = visualizers['Fashion MNIST'].visualize(
+        discrete_latent_parameters=discrete, continous_latent_parameters=continuous
+    )
+    return img
 
 def update_dsprites_image(yaxis, xaxis, shape, angle, scale1, scale2):
     continuous = [0, yaxis, xaxis, 0, shape, angle]
@@ -67,14 +77,15 @@ elif model_selection == "dSprites":
     scale2 = st.sidebar.slider("Scale 2", 0, 6, 0, 1)
     img = update_dsprites_image(yaxis, xaxis, shape, angle, scale1, scale2)
 
-# elif model_selection == "CelebA":
-#     attr1 = st.sidebar.slider("Attribute 1", -3.0, 3.0, 0.0, 0.1)
-#     attr2 = st.sidebar.slider("Attribute 2", -3.0, 3.0, 0.0, 0.1)
-#     attr3 = st.sidebar.slider("Attribute 3", -3.0, 3.0, 0.0, 0.1)
-#     attr4 = st.sidebar.slider("Attribute 4", -3.0, 3.0, 0.0, 0.1)
-#     attr5 = st.sidebar.slider("Attribute 5", -3.0, 3.0, 0.0, 0.1)
-#     attr6 = st.sidebar.slider("Attribute 6", -3.0, 3.0, 0.0, 0.1)
-#     img = update_celeba_image(attr1, attr2, attr3, attr4, attr5, attr6)
+elif model_selection == "Fashion MNIST":
+    garment_types = ["Dress", "Bag", "Ankle Boot", "Pullover", "Coat", "Trouser", "Shirt", "Sandale"]
+    selected_garment = st.sidebar.select_slider("Garment Type", options=garment_types, value="Dress")
+    attr1 = st.sidebar.slider("Size", -10.0, 2.0, 0.0, 1.)
+    attr2 = st.sidebar.slider("Extravagance", -10.0, 10.0, 0.0, 1.)
+    attr3 = st.sidebar.slider("Style", -10.0, 10.0, 0.0, 1.)
+    attr4 = st.sidebar.slider("Cut", -10.0, 10.0, 0.0, 1.)
+    selected_garment_index = garment_types.index(selected_garment)
+    img = update_fashion_mnist_image(attr1, attr2, attr3, attr4, selected_garment_index)
 
 # Using the Inter_Nearest interpolation for enhanced sharpness due to very low resolution.
 img = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_NEAREST)
