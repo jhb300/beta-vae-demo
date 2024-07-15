@@ -2,15 +2,21 @@ import imageio
 import numpy as np
 import torch
 from torch.nn import functional as F
-from torchvision.utils import make_grid
 
 EPS = 1e-12
 
 
-class Trainer():
-    def __init__(self, model, optimizer, cont_capacity=None,
-                 disc_capacity=None, print_loss_every=50, record_loss_every=5,
-                 use_cuda=False):
+class Trainer:
+    def __init__(
+        self,
+        model,
+        optimizer,
+        cont_capacity=None,
+        disc_capacity=None,
+        print_loss_every=50,
+        record_loss_every=5,
+        use_cuda=False,
+    ):
         """
         Class to handle training of model.
 
@@ -59,22 +65,20 @@ class Trainer():
         # Initialize attributes
         self.num_steps = 0
         self.batch_size = None
-        self.losses = {'loss': [],
-                       'recon_loss': [],
-                       'kl_loss': []}
+        self.losses = {"loss": [], "recon_loss": [], "kl_loss": []}
 
         # Keep track of divergence values for each latent variable
         if self.model.is_continuous:
-            self.losses['kl_loss_cont'] = []
+            self.losses["kl_loss_cont"] = []
             # For every dimension of continuous latent variables
-            for i in range(self.model.latent_spec['cont']):
-                self.losses['kl_loss_cont_' + str(i)] = []
+            for i in range(self.model.latent_spec["cont"]):
+                self.losses["kl_loss_cont_" + str(i)] = []
 
         if self.model.is_discrete:
-            self.losses['kl_loss_disc'] = []
+            self.losses["kl_loss_disc"] = []
             # For every discrete latent variable
-            for i in range(len(self.model.latent_spec['disc'])):
-                self.losses['kl_loss_disc_' + str(i)] = []
+            for i in range(len(self.model.latent_spec["disc"])):
+                self.losses["kl_loss_disc_" + str(i)] = []
 
     def train(self, data_loader, epochs=10, save_training_gif=None):
         """
@@ -99,8 +103,11 @@ class Trainer():
         self.model.train()
         for epoch in range(epochs):
             mean_epoch_loss = self._train_epoch(data_loader)
-            print('Epoch: {} Average loss: {:.2f}'.format(epoch + 1,
-                                                          self.batch_size * self.model.num_pixels * mean_epoch_loss))
+            print(
+                "Epoch: {} Average loss: {:.2f}".format(
+                    epoch + 1, self.batch_size * self.model.num_pixels * mean_epoch_loss
+                )
+            )
 
             if save_training_gif is not None:
                 # Generate batch of images and convert to grid
@@ -114,8 +121,7 @@ class Trainer():
                 training_progress_images.append(img_grid)
 
         if save_training_gif is not None:
-            imageio.mimsave(save_training_gif[0], training_progress_images,
-                            fps=24)
+            imageio.mimsave(save_training_gif[0], training_progress_images, fps=24)
 
     def _train_epoch(self, data_loader):
         """
@@ -125,9 +131,9 @@ class Trainer():
         ----------
         data_loader : torch.utils.data.DataLoader
         """
-        epoch_loss = 0.
-        print_every_loss = 0.  # Keeps track of loss to print every
-                               # self.print_loss_every
+        epoch_loss = 0.0
+        print_every_loss = 0.0  # Keeps track of loss to print every
+        # self.print_loss_every
         for batch_idx, (data, label) in enumerate(data_loader):
             iter_loss = self._train_iteration(data)
             epoch_loss += iter_loss
@@ -138,10 +144,14 @@ class Trainer():
                     mean_loss = print_every_loss
                 else:
                     mean_loss = print_every_loss / self.print_loss_every
-                print('{}/{}\tLoss: {:.3f}'.format(batch_idx * len(data),
-                                                  len(data_loader.dataset),
-                                                  self.model.num_pixels * mean_loss))
-                print_every_loss = 0.
+                print(
+                    "{}/{}\tLoss: {:.3f}".format(
+                        batch_idx * len(data),
+                        len(data_loader.dataset),
+                        self.model.num_pixels * mean_loss,
+                    )
+                )
+                print_every_loss = 0.0
         # Return mean epoch loss
         return epoch_loss / len(data_loader.dataset)
 
@@ -184,8 +194,10 @@ class Trainer():
             of the latent distributions as values.
         """
         # Reconstruction loss is pixel wise cross-entropy
-        recon_loss = F.binary_cross_entropy(recon_data.view(-1, self.model.num_pixels),
-                                            data.view(-1, self.model.num_pixels))
+        recon_loss = F.binary_cross_entropy(
+            recon_data.view(-1, self.model.num_pixels),
+            data.view(-1, self.model.num_pixels),
+        )
         # F.binary_cross_entropy takes mean over pixels, so unnormalise this
         recon_loss *= self.model.num_pixels
 
@@ -197,29 +209,33 @@ class Trainer():
 
         if self.model.is_continuous:
             # Calculate KL divergence
-            mean, logvar = latent_dist['cont']
+            mean, logvar = latent_dist["cont"]
             kl_cont_loss = self._kl_normal_loss(mean, logvar)
             # Linearly increase capacity of continuous channels
-            cont_min, cont_max, cont_num_iters, cont_gamma = \
-                self.cont_capacity
+            cont_min, cont_max, cont_num_iters, cont_gamma = self.cont_capacity
             # Increase continuous capacity without exceeding cont_max
-            cont_cap_current = (cont_max - cont_min) * self.num_steps / float(cont_num_iters) + cont_min
+            cont_cap_current = (cont_max - cont_min) * self.num_steps / float(
+                cont_num_iters
+            ) + cont_min
             cont_cap_current = min(cont_cap_current, cont_max)
             # Calculate continuous capacity loss
             cont_capacity_loss = cont_gamma * torch.abs(cont_cap_current - kl_cont_loss)
 
         if self.model.is_discrete:
             # Calculate KL divergence
-            kl_disc_loss = self._kl_multiple_discrete_loss(latent_dist['disc'])
+            kl_disc_loss = self._kl_multiple_discrete_loss(latent_dist["disc"])
             # Linearly increase capacity of discrete channels
-            disc_min, disc_max, disc_num_iters, disc_gamma = \
-                self.disc_capacity
+            disc_min, disc_max, disc_num_iters, disc_gamma = self.disc_capacity
             # Increase discrete capacity without exceeding disc_max or theoretical
             # maximum (i.e. sum of log of dimension of each discrete variable)
-            disc_cap_current = (disc_max - disc_min) * self.num_steps / float(disc_num_iters) + disc_min
+            disc_cap_current = (disc_max - disc_min) * self.num_steps / float(
+                disc_num_iters
+            ) + disc_min
             disc_cap_current = min(disc_cap_current, disc_max)
             # Require float conversion here to not end up with numpy float
-            disc_theoretical_max = sum([float(np.log(disc_dim)) for disc_dim in self.model.latent_spec['disc']])
+            disc_theoretical_max = sum(
+                [float(np.log(disc_dim)) for disc_dim in self.model.latent_spec["disc"]]
+            )
             disc_cap_current = min(disc_cap_current, disc_theoretical_max)
             # Calculate discrete capacity loss
             disc_capacity_loss = disc_gamma * torch.abs(disc_cap_current - kl_disc_loss)
@@ -232,9 +248,9 @@ class Trainer():
 
         # Record losses
         if self.model.training and self.num_steps % self.record_loss_every == 1:
-            self.losses['recon_loss'].append(recon_loss.item())
-            self.losses['kl_loss'].append(kl_loss.item())
-            self.losses['loss'].append(total_loss.item())
+            self.losses["recon_loss"].append(recon_loss.item())
+            self.losses["kl_loss"].append(kl_loss.item())
+            self.losses["loss"].append(total_loss.item())
 
         # To avoid large losses normalise by number of pixels
         return total_loss / self.model.num_pixels
@@ -262,9 +278,9 @@ class Trainer():
 
         # Record losses
         if self.model.training and self.num_steps % self.record_loss_every == 1:
-            self.losses['kl_loss_cont'].append(kl_loss.item())
-            for i in range(self.model.latent_spec['cont']):
-                self.losses['kl_loss_cont_' + str(i)].append(kl_means[i].item())
+            self.losses["kl_loss_cont"].append(kl_loss.item())
+            for i in range(self.model.latent_spec["cont"]):
+                self.losses["kl_loss_cont_" + str(i)].append(kl_means[i].item())
 
         return kl_loss
 
@@ -290,9 +306,9 @@ class Trainer():
 
         # Record losses
         if self.model.training and self.num_steps % self.record_loss_every == 1:
-            self.losses['kl_loss_disc'].append(kl_loss.item())
+            self.losses["kl_loss_disc"].append(kl_loss.item())
             for i in range(len(alphas)):
-                self.losses['kl_loss_disc_' + str(i)].append(kl_losses[i].item())
+                self.losses["kl_loss_disc_" + str(i)].append(kl_losses[i].item())
 
         return kl_loss
 

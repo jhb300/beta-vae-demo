@@ -9,7 +9,7 @@ import numpy as np
 model_paths = {
     "MNIST": "./trained_models/mnist/",
     "Fashion MNIST": "./trained_models/fashion/",
-    "dSprites": "./trained_models/dsprites/"
+    "dSprites": "./trained_models/dsprites/",
 }
 
 # Load visualizers for each model
@@ -17,30 +17,47 @@ visualizers = {name: Visualizer(path) for name, path in model_paths.items()}
 
 
 # Define function to update image
-def update_mnist_image(number_type, width, style1, style2, tilt, thickness):
+def update_mnist_image(
+    number_type: int,
+    width: float,
+    style1: float,
+    style2: float,
+    tilt: float,
+    thickness: float,
+) -> np.ndarray:
+    "Generate an MNIST image from a set of latent variables."
+
     continuous = [width, style1, tilt, 0.0, 0.0, 0.0, thickness, 0.0, style2, 0.0]
     discrete = np.zeros(10, int)
     number_mapping = [2, 8, 9, 1, 6, 3, 5, 4, 7, 0]
     discrete[number_mapping.index(number_type)] = (
-        3 # 3 for a good sharpness, fixed instead of ppf
+        3  # 3 for a good sharpness, fixed instead of ppf
     )
-    img = visualizers['MNIST'].visualize(
+    img = visualizers["MNIST"].visualize(
         discrete_latent_parameters=discrete, continous_latent_parameters=continuous
     )
     return img
 
-def update_fashion_mnist_image(size, diffusion, style, shape, garment_type):
+
+def update_fashion_mnist_image(
+    size: float, diffusion: float, style: float, shape: float, garment_type: int
+) -> np.ndarray:
+    "Generate a Fashion MNIST image from a set of latent variables."
+
     continuous = [0.0, size, 0.0, diffusion, 0.0, style, 0.0, 0.0, 0.0, shape]
     discrete = np.zeros(10, int)
-    discrete[garment_type] = (
-        3 # 3 for a good sharpness, fixed instead of ppf
-    )
-    img = visualizers['Fashion MNIST'].visualize(
+    discrete[garment_type] = 3  # 3 for a good sharpness, fixed instead of ppf
+    img = visualizers["Fashion MNIST"].visualize(
         discrete_latent_parameters=discrete, continous_latent_parameters=continuous
     )
     return img
 
-def update_dsprites_image(yaxis, xaxis, shape, angle, scale1, scale2):
+
+def update_dsprites_image(
+    yaxis: float, xaxis: float, shape: float, angle: float, scale1: float, scale2: float
+) -> np.ndarray:
+    "Generate a dSprites image from a set of latent variables."
+
     continuous = [0, yaxis, xaxis, 0, shape, angle]
     discrete = [scale2, scale1, 0]
     img = visualizers["dSprites"].visualize(
@@ -54,8 +71,7 @@ st.title("Disentangled Variational Autoencoder Demo")
 
 # Dropdown menu for model selection
 model_selection = st.sidebar.selectbox(
-    "Select Model", 
-    ("MNIST", "Fashion MNIST", "dSprites")
+    "Select Model", ("MNIST", "Fashion MNIST", "dSprites")
 )
 
 # Define sliders for each parameter based on selected model
@@ -78,12 +94,23 @@ elif model_selection == "dSprites":
     img = update_dsprites_image(yaxis, xaxis, shape, angle, scale1, scale2)
 
 elif model_selection == "Fashion MNIST":
-    garment_types = ["Dress", "Bag", "Ankle Boot", "Pullover", "Coat", "Trouser", "Shirt", "Sandale"]
-    selected_garment = st.sidebar.select_slider("Garment Type", options=garment_types, value="Dress")
-    attr1 = st.sidebar.slider("Size", -10.0, 2.0, 0.0, 1.)
-    attr2 = st.sidebar.slider("Extravagance", -10.0, 10.0, 0.0, 1.)
-    attr3 = st.sidebar.slider("Style", -10.0, 10.0, 0.0, 1.)
-    attr4 = st.sidebar.slider("Cut", -10.0, 10.0, 0.0, 1.)
+    garment_types = [
+        "Dress",
+        "Bag",
+        "Ankle Boot",
+        "Pullover",
+        "Coat",
+        "Trouser",
+        "Shirt",
+        "Sandale",
+    ]
+    selected_garment = st.sidebar.select_slider(
+        "Garment Type", options=garment_types, value="Dress"
+    )
+    attr1 = st.sidebar.slider("Size", -10.0, 2.0, 0.0, 1.0)
+    attr2 = st.sidebar.slider("Extravagance", -10.0, 10.0, 0.0, 1.0)
+    attr3 = st.sidebar.slider("Style", -10.0, 10.0, 0.0, 1.0)
+    attr4 = st.sidebar.slider("Cut", -10.0, 10.0, 0.0, 1.0)
     selected_garment_index = garment_types.index(selected_garment)
     img = update_fashion_mnist_image(attr1, attr2, attr3, attr4, selected_garment_index)
 

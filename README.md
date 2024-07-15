@@ -1,6 +1,7 @@
 # Disentangled Variational Autoencoder demo
 
-A demonstration of the capabilities of beta-VAE to disentangle data-generative factors. This demonstration provides a pre-trained disentangled VAE model and an interface that allows a user to alter the latent variables intuitively in order to generate handwritten digits according based on human-interpretable data-generative factors.
+A demonstration of the capabilities of beta-VAE to disentangle data-generative factors. This demonstration provides a pre-trained disentangled VAE model and an interface that allows a user to alter the latent variables intuitively in order to generate handwritten digits according based on human-interpretable data-generative factors.<br>
+The demo is based on JointVAE, a Variational Autoencoder that has both continuous and discrete latent variables (cf. Dupont, 2018).
 
 ## Getting Started
 
@@ -15,7 +16,7 @@ The package was developed using Python 3.9.6.
 <br>
 There are two ways to use this:
 
-1. <b>Jupyter Notebook:</b> Run all cells in the `demo.ipynb` notebook and start by setting a certain number using the first slider.
+1. <b>Jupyter Notebook:</b> Run all cells in the `demo.ipynb` notebook and start by setting the first slider.
 
 2. <b>Streamlit App:</b> Run the streamlit app using the following command:
    ```bash

@@ -6,7 +6,7 @@ EPS = 1e-12
 
 
 class VAE(nn.Module):
-    def __init__(self, img_size, latent_spec, temperature=.67, use_cuda=False):
+    def __init__(self, img_size, latent_spec, temperature=0.67, use_cuda=False):
         """
         Class which defines model and forward pass.
 
@@ -32,8 +32,8 @@ class VAE(nn.Module):
 
         # Parameters
         self.img_size = img_size
-        self.is_continuous = 'cont' in latent_spec
-        self.is_discrete = 'disc' in latent_spec
+        self.is_continuous = "cont" in latent_spec
+        self.is_discrete = "disc" in latent_spec
         self.latent_spec = latent_spec
         self.num_pixels = img_size[1] * img_size[2]
         self.temperature = temperature
@@ -45,35 +45,39 @@ class VAE(nn.Module):
         self.latent_disc_dim = 0
         self.num_disc_latents = 0
         if self.is_continuous:
-            self.latent_cont_dim = self.latent_spec['cont']
+            self.latent_cont_dim = self.latent_spec["cont"]
         if self.is_discrete:
-            self.latent_disc_dim += sum([dim for dim in self.latent_spec['disc']])
-            self.num_disc_latents = len(self.latent_spec['disc'])
+            self.latent_disc_dim += sum([dim for dim in self.latent_spec["disc"]])
+            self.num_disc_latents = len(self.latent_spec["disc"])
         self.latent_dim = self.latent_cont_dim + self.latent_disc_dim
 
         # Define encoder layers
         # Intial layer
         encoder_layers = [
             nn.Conv2d(self.img_size[0], 32, (4, 4), stride=2, padding=1),
-            nn.ReLU()
+            nn.ReLU(),
         ]
         # Add additional layer if (64, 64) images
         if self.img_size[1:] == (64, 64):
             encoder_layers += [
                 nn.Conv2d(32, 32, (4, 4), stride=2, padding=1),
-                nn.ReLU()
+                nn.ReLU(),
             ]
         elif self.img_size[1:] == (32, 32):
             # (32, 32) images are supported but do not require an extra layer
             pass
         else:
-            raise RuntimeError("{} sized images not supported. Only (None, 32, 32) and (None, 64, 64) supported. Build your own architecture or reshape images!".format(img_size))
+            raise RuntimeError(
+                "{} sized images not supported. Only (None, 32, 32) and (None, 64, 64) supported. Build your own architecture or reshape images!".format(
+                    img_size
+                )
+            )
         # Add final layers
         encoder_layers += [
             nn.Conv2d(32, 64, (4, 4), stride=2, padding=1),
             nn.ReLU(),
             nn.Conv2d(64, 64, (4, 4), stride=2, padding=1),
-            nn.ReLU()
+            nn.ReLU(),
         ]
 
         # Define encoder
@@ -82,8 +86,7 @@ class VAE(nn.Module):
         # Map encoded features into a hidden vector which will be used to
         # encode parameters of the latent distribution
         self.features_to_hidden = nn.Sequential(
-            nn.Linear(64 * 4 * 4, self.hidden_dim),
-            nn.ReLU()
+            nn.Linear(64 * 4 * 4, self.hidden_dim), nn.ReLU()
         )
 
         # Encode parameters of latent distribution
@@ -93,7 +96,7 @@ class VAE(nn.Module):
         if self.is_discrete:
             # Linear layer for each of the categorical distributions
             fc_alphas = []
-            for disc_dim in self.latent_spec['disc']:
+            for disc_dim in self.latent_spec["disc"]:
                 fc_alphas.append(nn.Linear(self.hidden_dim, disc_dim))
             self.fc_alphas = nn.ModuleList(fc_alphas)
 
@@ -102,7 +105,7 @@ class VAE(nn.Module):
             nn.Linear(self.latent_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, 64 * 4 * 4),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         # Define decoder
@@ -112,7 +115,7 @@ class VAE(nn.Module):
         if self.img_size[1:] == (64, 64):
             decoder_layers += [
                 nn.ConvTranspose2d(64, 64, (4, 4), stride=2, padding=1),
-                nn.ReLU()
+                nn.ReLU(),
             ]
 
         decoder_layers += [
@@ -121,7 +124,7 @@ class VAE(nn.Module):
             nn.ConvTranspose2d(32, 32, (4, 4), stride=2, padding=1),
             nn.ReLU(),
             nn.ConvTranspose2d(32, self.img_size[0], (4, 4), stride=2, padding=1),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         ]
 
         # Define decoder
@@ -147,12 +150,12 @@ class VAE(nn.Module):
         latent_dist = {}
 
         if self.is_continuous:
-            latent_dist['cont'] = [self.fc_mean(hidden), self.fc_log_var(hidden)]
+            latent_dist["cont"] = [self.fc_mean(hidden), self.fc_log_var(hidden)]
 
         if self.is_discrete:
-            latent_dist['disc'] = []
+            latent_dist["disc"] = []
             for fc_alpha in self.fc_alphas:
-                latent_dist['disc'].append(F.softmax(fc_alpha(hidden), dim=1))
+                latent_dist["disc"].append(F.softmax(fc_alpha(hidden), dim=1))
 
         return latent_dist
 
@@ -169,12 +172,12 @@ class VAE(nn.Module):
         latent_sample = []
 
         if self.is_continuous:
-            mean, logvar = latent_dist['cont']
+            mean, logvar = latent_dist["cont"]
             cont_sample = self.sample_normal(mean, logvar)
             latent_sample.append(cont_sample)
 
         if self.is_discrete:
-            for alpha in latent_dist['disc']:
+            for alpha in latent_dist["disc"]:
                 disc_sample = self.sample_gumbel_softmax(alpha)
                 latent_sample.append(disc_sample)
 
