@@ -1,5 +1,5 @@
 # Disentangled Variational Autoencoder demo
-Submission by: Andre Gilbert (4365546) and Jan Henrik Bertrand (8556462)
+Submission by: Andre Gilbert (4365546) and Jan Henrik Bertrand (8556462) - This counts as one submission together with the presentation about Disentangled Variational Autoencoders, where this repository serves as a demo.<br>
 A demonstration of the capabilities of beta-VAE to disentangle data-generative factors. This demonstration provides a pre-trained disentangled VAE model and an interface that allows a user to alter the latent variables intuitively in order to generate handwritten digits according based on human-interpretable data-generative factors.<br>
 The demo is based on JointVAE, a Variational Autoencoder that has both continuous and discrete latent variables (cf. Dupont, 2018).
 
